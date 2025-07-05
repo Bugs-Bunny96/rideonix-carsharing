@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Rideonix — Car Sharing</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-image: url('https://cdn.pixabay.com/photo/2013/11/15/13/57/road-210913_1280.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: orange;
+            position: relative;
+            z-index: 0;
+        }
+
+        nav.navbar {
+            z-index: 10;
+            position: relative;
+        }
+
+        .hero {
+            padding: 50px 0;
+            text-shadow: 0 2px 10px black;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: bold;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+        }
+
+        .btn-hero {
+            font-size: 1.25rem;
+            padding: 0.75rem 2rem;
+        }
+
+        .section-title {
+            font-weight: bold;
+            margin-top: 60px;
+            margin-bottom: 30px;
+        }
+
+        .car-image {
+            height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: -1;
+        }
+
+        .container-box {
+            background-color: rgba(0,0,0,0.6);
+            padding: 30px;
+            border-radius: 10px;
+            margin-top: 60px;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+<div class="overlay"></div>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
+    <a class="navbar-brand text-warning" th:href="@{/}">Rideonix</a>
+    <div class="collapse navbar-collapse justify-content-end">
+        <ul class="navbar-nav gap-2">
+            <li class="nav-item">
+                <a class="btn btn-success" th:href="@{/cars}">Browse Cars</a>
+            </li>
+            <li class="nav-item">
+                <a class="btn btn-info" th:href="@{/cars/my-bookings}">My Bookings</a>
+            </li>
+            <li class="nav-item" th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
+                <a class="btn btn-warning" th:href="@{/admin/cars}">Admin Panel</a>
+            </li>
+            <li class="nav-item" th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
+                <a class="btn btn-dark" th:href="@{/admin/bookings}">All Bookings</a>
+            </li>
+            <li class="nav-item" th:if="${#authorization.expression('isAuthenticated()')}">
+                <form th:action="@{/logout}" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-outline-light">Logout</button>
+                </form>
+            </li>
+            <li class="nav-item" th:if="${#authorization.expression('isAnonymous()')}">
+                <a class="btn btn-outline-light" th:href="@{/login}">Login</a>
+            </li>
+
+        </ul>
+    </div>
+</nav>
+
+<div class="hero text-center">
+    <div class="container">
+        <h1>Welcome to Rideonix</h1>
+        <p>Drive the future. Anytime. Anywhere. Your car-sharing solution in Chișinău.</p>
+        <a href="/cars" class="btn btn-success btn-lg mt-3">🚗 Book Now</a>
+    </div>
+</div>
+
+<div class="container text-center">
+    <h2 class="section-title">Why Choose Rideonix?</h2>
+    <p class="lead">We offer a modern fleet of vehicles, easy mobile booking, and transparent pricing. Whether it’s a quick trip across town or a weekend getaway, Rideonix has you covered.</p>
+</div>
+
+<div class="container mt-5 container-box">
+    <div class="row text-center">
+        <div class="col-md-4">
+            <img src="https://avatars.dzeninfra.ru/get-zen_doc/271828/pub_673c4b415aa12a30cfd80a0c_673c4bc88936422992d01295/scale_1200" class="car-image w-100 mb-3" alt="Audi A6">
+            <h5>Audi A6</h5>
+            <p>Comfort and performance in one luxury package. Perfect for business trips.</p>
+        </div>
+        <div class="col-md-4">
+            <img src="https://a.d-cd.net/txCONOp8JaHN4EFqIPBeJrnEWQI-1920.jpg" class="car-image w-100 mb-3" alt="BMW 5 Series">
+            <h5>BMW 5 Series</h5>
+            <p>Dynamic, powerful, and ready for adventure. Your next drive awaits.</p>
+        </div>
+        <div class="col-md-4">
+            <img src="https://file.autodoc.ru/news/avto-novosti/2769613280_15.jpg" class="car-image w-100 mb-3" alt="Volkswagen Passat">
+            <h5>Volkswagen Passat</h5>
+            <p>Stylish and practical — the perfect city companion.</p>
+        </div>
+    </div>
+</div>
+
+<footer class="text-center mt-5 py-4" style="color: orange;">
+    <small>&copy; 2025 Rideonix. All rights reserved.</small>
+</footer>
+
+</body>
+</html>

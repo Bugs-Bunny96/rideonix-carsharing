@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${car.brand} + ' ' + ${car.model}">Car Details — Rideonix</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-image: url('https://cdn.pixabay.com/photo/2013/11/15/13/57/road-210913_1280.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: orange;
+        }
+        .overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: -1;
+        }
+        .container-box {
+            background-color: rgba(0,0,0,0.6);
+            padding: 30px;
+            border-radius: 10px;
+            margin-top: 60px;
+            color: white;
+        }
+        .flatpickr-calendar {
+            background-color: #212529;
+            color: #ffffff;
+            border: 1px solid #444;
+        }
+        .flatpickr-day {
+            color: #dee2e6;
+        }
+        .flatpickr-day.today {
+            background-color: #0d6efd;
+            color: #fff;
+        }
+        .flatpickr-day:hover {
+            background-color: #495057 !important;
+            color: #ffffff !important;
+            border-radius: 50%;
+        }
+        .flatpickr-day.disabled,
+        .flatpickr-day.disabled:hover {
+            background-color: #adb5bd !important;
+            color: #495057 !important;
+            opacity: 1;
+            cursor: not-allowed;
+            border-radius: 50%;
+        }
+        .flatpickr-months, .flatpickr-weekdays {
+            background-color: #343a40;
+            color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+<div class="overlay"></div>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
+    <a class="navbar-brand text-warning" th:href="@{/}">🚘 Rideonix</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav gap-2">
+            <li class="nav-item"><a class="btn btn-success" th:href="@{/cars}">Book Cars</a></li>
+            <li class="nav-item"><a class="btn btn-info" th:href="@{/cars/my-bookings}">My Bookings</a></li>
+            <li class="nav-item" th:if="${#authorization.expression('hasRole(''ADMIN'')')}"><a class="btn btn-warning" th:href="@{/admin/cars}">Admin Panel</a></li>
+            <li class="nav-item" th:if="${#authorization.expression('hasRole(''ADMIN'')')}"><a class="btn btn-light" th:href="@{/admin/bookings}">All Bookings</a></li>
+            <li class="nav-item" th:if="${#authorization.expression('isAuthenticated()')}">
+                <form th:action="@{/logout}" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-outline-light">Logout</button>
+                </form>
+            </li>
+            <li class="nav-item" th:if="${#authorization.expression('isAnonymous()')}">
+                <a class="btn btn-outline-light" th:href="@{/login}">Login</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container container-box">
+    <h2 th:text="${car.brand + ' ' + car.model}" class="text-center mb-4"></h2>
+    <div class="text-center mb-3">
+        <img th:src="${car.imageUrl}" class="img-fluid rounded mb-3" style="max-width:400px;" />
+        <p><strong>Year:</strong> <span th:text="${car.year}"></span></p>
+        <p><strong>Price per day:</strong> <span th:text="${car.pricePerDay} + ' MDL'"></span></p>
+    </div>
+
+    <h4>Book this car</h4>
+    <form id="bookingForm" th:action="@{/cars/{id}/book(id=${car.id})}" method="post" class="mb-4">
+        <div class="row mb-2">
+            <div class="col-md-6">
+                <label>Start Date:</label>
+                <input type="date" id="startDate" name="startDate" class="form-control flatpickr" required />
+            </div>
+            <div class="col-md-6">
+                <label>End Date:</label>
+                <input type="date" id="endDate" name="endDate" class="form-control flatpickr" required />
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-md-6">
+                <label for="phone">Phone Number:</label>
+                <input type="tel" id="phone" name="phone" class="form-control" placeholder="e.g. 60000000" pattern="\d{8}" required>
+            </div>
+            <div class="col-md-6">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" class="form-control" placeholder="e.g. yourname@example.com" required>
+            </div>
+        </div>
+        <p><strong>Total price:</strong> <span id="totalPrice">0</span> MDL</p>
+        <button type="submit" class="btn btn-success w-100">Reserve</button>
+    </form>
+
+    <div th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
+        <h5 class="mb-3">Active Reservations for this Car</h5>
+        <div class="table-responsive">
+            <table class="table table-dark table-striped">
+                <thead>
+                <tr>
+                    <th>User</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Total Price</th>
+                    <th>Timestamp</th>
+                    <th>Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="b : ${bookings}"
+                    th:if="${b.startDate.isAfter(T(java.time.LocalDate).now()) || b.startDate.equals(T(java.time.LocalDate).now())}">
+                    <td th:text="${b.user.username}"></td>
+                    <td th:text="${b.startDate}"></td>
+                    <td th:text="${b.endDate}"></td>
+                    <td th:text="${(T(java.time.temporal.ChronoUnit).DAYS.between(b.startDate, b.endDate) + 1) * b.car.pricePerDay.doubleValue()} + ' MDL'"></td>
+                    <td th:text="${#temporals.format(b.timestamp, 'yyyy-MM-dd HH:mm')}"></td>
+                    <td th:text="${b.status}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <a th:href="@{/cars}" class="btn btn-secondary">Back to car list</a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script th:inline="javascript">
+    let disabledRanges = [
+        /*[# th:each="b : ${bookings}"]*/
+        { from: /*[[${b.startDate}]]*/, to: /*[[${b.endDate}]]*/ },
+        /*[/]*/
+    ];
+
+    flatpickr("#startDate", { dateFormat: "Y-m-d", disable: disabledRanges, minDate: "today" });
+    flatpickr("#endDate", { dateFormat: "Y-m-d", disable: disabledRanges, minDate: "today" });
+
+    function calculateTotalPrice() {
+        const start = document.getElementById("startDate").value;
+        const end = document.getElementById("endDate").value;
+        if (!start || !end) return;
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+        const diffDays = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+        const pricePerDay = /*[[${car.pricePerDay}]]*/ 0;
+        document.getElementById("totalPrice").textContent = diffDays > 0 ? diffDays * pricePerDay : 0;
+    }
+
+    document.getElementById("startDate").addEventListener("change", calculateTotalPrice);
+    document.getElementById("endDate").addEventListener("change", calculateTotalPrice);
+
+    const form = document.getElementById("bookingForm");
+    form.addEventListener("submit", function(event) {
+        event.preventDefault();
+
+        const start = document.getElementById("startDate").value;
+        const end = document.getElementById("endDate").value;
+        const phone = document.getElementById("phone").value;
+        const email = document.getElementById("email").value;
+
+        if (!start || !end) {
+            alert("Please select both Start Date and End Date.");
+            return;
+        }
+
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+
+        if (endDate < startDate) {
+            alert("End Date cannot be before Start Date!");
+            return;
+        }
+
+        if (!/^\d{8}$/.test(phone)) {
+            alert("Phone number must be exactly 8 digits.");
+            return;
+        }
+
+        if (!email.includes('@')) {
+            alert("Enter a valid email address.");
+            return;
+        }
+
+        // Перед открытием модалки обновляем информацию
+        document.getElementById("modalStartDate").textContent = start;
+        document.getElementById("modalEndDate").textContent = end;
+        document.getElementById("modalTotalPrice").textContent = document.getElementById("totalPrice").textContent;
+        document.getElementById("modalPhone").textContent = phone;
+        document.getElementById("modalEmail").textContent = email;
+
+        const modal = new bootstrap.Modal(document.getElementById("confirmBookingModal"));
+        modal.show();
+
+        document.getElementById("confirmBookingBtn").addEventListener("click", () => {
+            modal.hide();
+            form.submit();
+        }, { once: true });
+    });
+
+</script>
+
+<!-- Modal -->
+<div class="modal fade" id="confirmBookingModal" tabindex="-1" aria-labelledby="confirmBookingLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-warning" id="confirmBookingLabel">Confirm Your Booking</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>You are about to book this car. Please confirm the details below:</p>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><span class="text-warning">📅 Start Date:</span> <span id="modalStartDate"></span></li>
+                    <li class="mb-2"><span class="text-warning">📅 End Date:</span> <span id="modalEndDate"></span></li>
+                    <li class="mb-2"><span class="text-warning">💰 Total Price:</span> <span id="modalTotalPrice"></span> MDL</li>
+                    <li class="mb-2"><span class="text-warning">📞 Phone:</span> <span id="modalPhone"></span></li>
+                    <li class="mb-2"><span class="text-warning">✉️ Email:</span> <span id="modalEmail"></span></li>
+                </ul>
+                <p class="mt-3">Payment will be made at the office. Do you want to proceed?</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light" id="confirmBookingBtn">Yes, Rent</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+</body>
+</html>
